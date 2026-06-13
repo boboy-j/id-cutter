@@ -1,0 +1,19 @@
+{
+  "name": "AI 证件照制作工具",
+  "short_name": "AI证件照",
+  "description": "在线AI证件照制作工具 - 纯前端处理，照片不上传服务器，隐私安全",
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

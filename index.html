@@ -1,0 +1,3571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="AI证件照">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="AI证件照">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="description" content="在线AI证件照制作工具 - 纯前端处理，照片不上传服务器，隐私安全">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <title>AI 证件照制作工具</title>
+    <style>
+        /* ===================== Reset & Base ===================== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-body);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 0;
+        }
+
+        .app-container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 0 24px 32px;
+        }
+
+        /* ===================== Header / Banner ===================== */
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: var(--header-bg, linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%));
+            padding: 22px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--header-shadow, 0 4px 24px rgba(99, 102, 241, 0.3));
+            margin-bottom: 28px;
+            backdrop-filter: blur(12px);
+        }
+
+        .app-header .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .app-header .brand-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(4px);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: transform 0.3s;
+        }
+
+        .app-header .brand:hover .brand-icon {
+            transform: rotate(-10deg) scale(1.05);
+        }
+
+        .app-header .brand-text h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.3px;
+            line-height: 1.3;
+        }
+
+        .app-header .brand-text p {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.72);
+            margin-top: 2px;
+            letter-spacing: 0.3px;
+        }
+
+        .app-header .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(8px);
+            padding: 7px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            white-space: nowrap;
+        }
+
+        .app-header .badge .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #34d399;
+            display: inline-block;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ===================== Card ===================== */
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            box-shadow: var(--shadow-card);
+            padding: 24px 28px;
+            margin-bottom: 20px;
+            border: 1px solid var(--bg-card-border);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0;
+            letter-spacing: 0.2px;
+        }
+
+        .clear-btn {
+            font-size: 12px;
+            color: #94a3b8;
+            background: none;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 2px 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            line-height: 1.6;
+            white-space: nowrap;
+        }
+        .clear-btn:hover {
+            color: #ef4444;
+            border-color: #fca5a5;
+            background: #fef2f2;
+        }
+
+        .card-title .icon {
+            font-size: 20px;
+        }
+
+        /* ===================== Upload Area ===================== */
+        .upload-area {
+            border: 2px dashed #c7d2fe;
+            border-radius: 14px;
+            padding: 44px 20px 36px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            background: var(--bg-upload);
+        }
+
+        .upload-area:hover {
+            border-color: #6366f1;
+            background: var(--bg-upload-hover);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.08);
+        }
+
+        .upload-area.dragover {
+            border-color: #6366f1;
+            background: linear-gradient(180deg, #eef0ff 0%, #e0e3ff 100%);
+            transform: scale(1.015);
+            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.15);
+        }
+
+        .upload-area .upload-icon {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.06) 100%);
+            border-radius: 20px;
+            transition: transform 0.3s, background 0.3s;
+        }
+
+        .upload-area:hover .upload-icon {
+            transform: translateY(-3px);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.14) 0%, rgba(139, 92, 246, 0.10) 100%);
+        }
+
+        .upload-area.dragover .upload-icon {
+            transform: translateY(-3px) scale(1.08);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, rgba(139, 92, 246, 0.14) 100%);
+        }
+
+        .upload-area .upload-icon .upload-icon-inner {
+            font-size: 32px;
+            line-height: 1;
+        }
+
+        .upload-area .upload-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .upload-area .upload-hint {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        .upload-area input[type="file"] {
+            display: none;
+        }
+
+        /* ===================== Guidelines ===================== */
+        .guidelines {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .guideline-item {
+            background: var(--bg-guideline, #f8f9fe);
+            border: 1px solid var(--bg-guideline-border, #eef0f6);
+            border-radius: 12px;
+            padding: 12px 14px 14px;
+            transition: all 0.2s ease;
+        }
+
+        .guideline-item:hover {
+            border-color: #dbe0f5;
+            background: var(--bg-guideline-hover, #f5f6ff);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99,102,241,0.08);
+        }
+
+        .guideline-item .guide-icon {
+            font-size: 16px;
+            margin-right: 6px;
+        }
+
+        .guideline-item .guide-title {
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 4px;
+        }
+
+        .guideline-item .guide-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.55;
+            padding-left: 0;
+        }
+
+
+
+        /* ===================== Main Content (2 columns) ===================== */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .upload-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            .guidelines {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .app-container {
+                padding: 0 16px 20px;
+            }
+        }
+
+        /* ===================== Preview ===================== */
+        .preview-box {
+            width: 100%;
+            aspect-ratio: 3/4;
+            max-height: 440px;
+            background: var(--bg-preview, #f8f9fc);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid var(--bg-preview-border, #e9ecf0);
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.03);
+        }
+
+        .preview-box img,
+        .preview-box canvas {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .preview-box .placeholder {
+            text-align: center;
+            color: #94a3b8;
+            user-select: none;
+        }
+
+        .preview-box .placeholder .icon {
+            font-size: 42px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .preview-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            letter-spacing: 0.3px;
+        }
+
+        /* ===================== Top Row: Upload + Original ===================== */
+        .upload-row {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .upload-card {
+            margin-bottom: 0;
+        }
+        .original-card {
+            margin-bottom: 0;
+        }
+
+        .original-preview-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .original-preview-box {
+            width: 100%;
+            max-width: 340px;
+            aspect-ratio: 3/4;
+            position: relative;
+            user-select: none;
+        }
+
+        .image-info {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 12px;
+            justify-content: center;
+        }
+
+        .image-info span {
+            background: var(--bg-image-info, #f1f4f9);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        /* ===================== Crop System ===================== */
+        .crop-container {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            border-radius: 12px;
+            cursor: grab;
+        }
+
+        .crop-container:active {
+            cursor: grabbing;
+        }
+
+        .crop-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-origin: 0 0;
+            max-width: none;
+            max-height: none;
+            pointer-events: none;
+            will-change: transform;
+        }
+
+        /* Crop overlay */
+        .crop-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .crop-overlay .mask {
+            position: absolute;
+            inset: 0;
+            background: var(--crop-mask, rgba(15, 23, 42, 0.4));
+        }
+
+        .crop-overlay .window {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid rgba(255, 255, 255, 0.92);
+            border-radius: 6px;
+            box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.4), 0 0 20px rgba(0, 0, 0, 0.1);
+            pointer-events: none;
+            transition: width 0.25s ease, height 0.25s ease;
+        }
+
+        .crop-overlay .window::before,
+        .crop-overlay .window::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-color: #fff;
+            border-style: solid;
+            pointer-events: none;
+        }
+        .crop-overlay .window::before {
+            top: -2px;
+            left: -2px;
+            border-width: 3px 0 0 3px;
+            border-radius: 4px 0 0 0;
+        }
+        .crop-overlay .window::after {
+            top: -2px;
+            right: -2px;
+            border-width: 3px 3px 0 0;
+            border-radius: 0 4px 0 0;
+        }
+        .crop-overlay .window .corner-br,
+        .crop-overlay .window .corner-bl {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-color: #fff;
+            border-style: solid;
+            pointer-events: none;
+        }
+        .crop-overlay .window .corner-br {
+            bottom: -2px;
+            right: -2px;
+            border-width: 0 3px 3px 0;
+            border-radius: 0 0 4px 0;
+        }
+        .crop-overlay .window .corner-bl {
+            bottom: -2px;
+            left: -2px;
+            border-width: 0 0 3px 3px;
+            border-radius: 0 0 0 4px;
+        }
+
+        /* Crop 9-grid (rule of thirds) */
+        .crop-overlay .window .grid {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .crop-overlay .window .grid::before,
+        .crop-overlay .window .grid::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.35);
+            pointer-events: none;
+        }
+        /* Horizontal grid lines (⅓ and ⅔) */
+        .crop-overlay .window .grid::before {
+            top: 33.33%;
+            left: 0;
+            right: 0;
+            height: 1px;
+        }
+        .crop-overlay .window .grid::after {
+            top: 66.67%;
+            left: 0;
+            right: 0;
+            height: 1px;
+        }
+        /* Vertical grid lines via extra elements */
+        .crop-overlay .window .grid .g-v1,
+        .crop-overlay .window .grid .g-v2 {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: rgba(255, 255, 255, 0.35);
+            pointer-events: none;
+        }
+        .crop-overlay .window .grid .g-v1 { left: 33.33%; }
+        .crop-overlay .window .grid .g-v2 { left: 66.67%; }
+
+        .crop-instructions {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(4px);
+            color: #fff;
+            font-size: 12px;
+            padding: 4px 14px;
+            border-radius: 14px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .crop-instructions.visible {
+            opacity: 1;
+        }
+
+        /* Zoom controls */
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 10px;
+            justify-content: center;
+            padding: 0 4px;
+        }
+
+        .zoom-controls button {
+            width: 34px;
+            height: 34px;
+            border: 1px solid #e2e5ea;
+            background: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 17px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.18s ease;
+            color: #475569;
+            flex-shrink: 0;
+        }
+
+        .zoom-controls button:hover {
+            background: #f1f4f9;
+            border-color: #cbd5e1;
+            color: var(--text-primary);
+        }
+
+        .zoom-controls button:active {
+            transform: scale(0.95);
+        }
+
+        .zoom-controls .zoom-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            min-width: 48px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .zoom-controls .zoom-slider {
+            flex: 1;
+            max-width: 140px;
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #e2e5ea;
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .zoom-controls .zoom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #6366f1;
+            cursor: pointer;
+            border: 2.5px solid #fff;
+            box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
+            transition: box-shadow 0.2s;
+        }
+
+        .zoom-controls .zoom-slider::-webkit-slider-thumb:hover {
+            box-shadow: 0 2px 10px rgba(99, 102, 241, 0.45);
+        }
+
+        .zoom-controls .zoom-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #6366f1;
+            cursor: pointer;
+            border: 2.5px solid #fff;
+            box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
+        }
+
+        .zoom-btn-reset {
+            font-size: 12px !important;
+            width: auto !important;
+            padding: 0 12px !important;
+            background: #f8f9fc !important;
+            font-weight: 400 !important;
+        }
+
+        .zoom-btn-reset:hover {
+            background: #eef0f5 !important;
+        }
+
+        .main-preview {
+            max-height: 520px;
+            margin-bottom: 12px;
+        }
+
+        /* ===================== Controls ===================== */
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        /* ===================== Color Options ===================== */
+        .color-options {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .color-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .color-btn:hover {
+            transform: scale(1.12);
+        }
+
+        .color-btn.active {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .color-btn .tooltip {
+            position: absolute;
+            bottom: -26px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            display: none;
+            font-weight: 500;
+        }
+
+        .color-btn:hover .tooltip {
+            display: block;
+        }
+
+        .color-btn-white {
+            background: #ffffff;
+            border-color: #d1d5db;
+        }
+        .color-btn-white.active {
+            border-color: #6366f1;
+        }
+
+        .color-btn-blue {
+            background: #1a73e8;
+        }
+        .color-btn-red {
+            background: #e8343a;
+        }
+        .color-btn-gray {
+            background: #cbd5e1;
+        }
+
+        /* ===================== Size Options ===================== */
+        .size-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .size-btn {
+            padding: 8px 18px;
+            border-radius: 10px;
+            border: 1.5px solid #e2e5ea;
+            background: #fff;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: #475569;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .size-btn:hover {
+            border-color: #a5b4fc;
+            color: #6366f1;
+            background: #f8f9ff;
+        }
+
+        .size-btn.active {
+            border-color: #6366f1;
+            background: #6366f1;
+            color: #fff;
+        }
+
+        .size-btn .sub {
+            font-size: 11px;
+            opacity: 0.65;
+            display: block;
+            margin-top: 1px;
+            font-weight: 400;
+        }
+
+        .size-btn.active .sub {
+            opacity: 0.8;
+        }
+
+        /* ===================== Process Button ===================== */
+        .process-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.3px;
+        }
+
+        .process-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #7c3aed, #6366f1);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .process-btn:hover:not(:disabled)::before {
+            opacity: 1;
+        }
+
+        .process-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);
+        }
+
+        .process-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .process-btn .btn-text {
+            position: relative;
+            z-index: 1;
+        }
+
+        .process-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .process-btn .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2.5px solid rgba(255, 255, 255, 0.25);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .process-btn.loading .btn-text {
+            display: none;
+        }
+
+        .process-btn.loading .spinner {
+            display: block;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ===================== Progress Bar ===================== */
+        .progress-wrap {
+            margin-top: 14px;
+            display: none;
+        }
+
+        .progress-wrap.active {
+            display: block;
+            animation: fadeSlideIn 0.3s ease;
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: #e2e5ea;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-bar .fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #6366f1, #a855f7);
+            border-radius: 3px;
+            transition: width 0.35s ease;
+        }
+
+        .progress-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: 6px;
+            font-weight: 500;
+        }
+
+        /* ===================== Export Section ===================== */
+        .export-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .export-field {
+            flex: 1;
+            min-width: 130px;
+        }
+
+        .export-field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #475569;
+            margin-bottom: 5px;
+        }
+
+        .export-field select {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1.5px solid #e2e5ea;
+            border-radius: 9px;
+            font-size: 14px;
+            color: var(--text-primary);
+            background: #fff;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .export-field select:hover {
+            border-color: #cbd5e1;
+        }
+
+        .export-field select:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .export-btn {
+            width: 100%;
+            padding: 11px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            transition: all 0.25s ease;
+            white-space: nowrap;
+            margin-top: 8px;
+            letter-spacing: 0.3px;
+        }
+
+        .export-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .export-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .export-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ===================== Status / Toast ===================== */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
+            transform: translateY(-24px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 999;
+            pointer-events: none;
+            backdrop-filter: blur(8px);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        .toast.error {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        .toast.info {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        }
+
+        /* ===================== Loading overlay ===================== */
+        .loading-overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(4px);
+            border-radius: 12px;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 5;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-overlay .lds-ring {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+        }
+
+        .loading-overlay .lds-ring div {
+            box-sizing: border-box;
+            display: block;
+            width: 32px;
+            height: 32px;
+            margin: 4px;
+            border: 3px solid #6366f1;
+            border-radius: 50%;
+            animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+            border-color: #6366f1 transparent transparent transparent;
+        }
+
+        .loading-overlay .lds-ring div:nth-child(1) {
+            animation-delay: -0.45s;
+        }
+        .loading-overlay .lds-ring div:nth-child(2) {
+            animation-delay: -0.3s;
+        }
+        .loading-overlay .lds-ring div:nth-child(3) {
+            animation-delay: -0.15s;
+        }
+
+        @keyframes lds-ring {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-overlay .loading-text {
+            font-size: 14px;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        /* ===================== File size display ===================== */
+        .file-size-display {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-top: 6px;
+            text-align: center;
+        }
+
+        /* ===================== Custom color picker ===================== */
+        .custom-color-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Hidden native input */
+        .custom-color-wrap #customColor {
+            position: absolute;
+            width: 0;
+            height: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Visible styled button */
+        .custom-color-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            border: 2px solid #e2e5ea;
+            background: #fff;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s;
+            overflow: hidden;
+        }
+
+        /* Rainbow gradient ring */
+        .custom-color-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 8px;
+            background: conic-gradient(
+                #ff6b6b, #ffa94d, #ffd43b, #69db7c,
+                #4dabf7, #748ffc, #da77f2, #ff6b6b
+            );
+            mask: radial-gradient(circle at center, transparent 62%, #000 63%);
+            -webkit-mask: radial-gradient(circle at center, transparent 62%, #000 63%);
+        }
+
+        /* "+" icon */
+        .custom-color-btn .plus-icon {
+            position: relative;
+            z-index: 1;
+            font-size: 20px;
+            line-height: 1;
+            font-weight: 300;
+            color: #94a3b8;
+            transition: color 0.2s, transform 0.25s;
+        }
+
+        .custom-color-btn:hover {
+            border-color: #a5b4fc;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+            transform: scale(1.08);
+        }
+
+        .custom-color-btn:hover .plus-icon {
+            color: #6366f1;
+            transform: rotate(90deg);
+        }
+
+        .custom-color-btn:active {
+            transform: scale(0.94);
+        }
+
+        /* Tooltip on hover */
+        .custom-color-btn .tooltip {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%) translateY(4px);
+            background: #1e293b;
+            color: #fff;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+
+        .custom-color-btn .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #1e293b;
+        }
+
+        .custom-color-btn:hover .tooltip {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Show selected color as dot in center */
+        .custom-color-btn .selected-color {
+            position: relative;
+            z-index: 1;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid #e2e5ea;
+            background: #fff;
+            transition: background 0.2s;
+            display: none;
+        }
+
+        .custom-color-btn .selected-color.show {
+            display: block;
+        }
+
+        .custom-color-btn .selected-color.show + .plus-icon {
+            display: none;
+        }
+
+        /* ===================== Responsive ===================== */
+        @media (max-width: 480px) {
+            body {
+                background: #f8f9fc;
+            }
+            .card {
+                padding: 16px 18px;
+                border-radius: 14px;
+            }
+            .app-header {
+                padding: 16px 18px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                margin-bottom: 20px;
+            }
+            .app-header .brand-text h1 {
+                font-size: 18px;
+            }
+            .app-header .badge {
+                font-size: 11px;
+                padding: 5px 12px;
+            }
+            .app-container {
+                padding: 0 12px 24px;
+            }
+            .upload-row {
+                gap: 16px;
+                margin-bottom: 16px;
+            }
+            .main-grid {
+                gap: 16px;
+            }
+            .guidelines {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+            .guideline-item {
+                padding: 10px 12px 12px;
+            }
+            .guideline-item .guide-title {
+                font-size: 12px;
+            }
+            .guideline-item .guide-desc {
+                font-size: 11px;
+            }
+            .export-row {
+                flex-direction: column;
+            }
+            .export-field {
+                min-width: 100%;
+            }
+            .process-btn {
+                padding: 13px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .guidelines {
+                grid-template-columns: 1fr;
+            }
+            .color-options {
+                gap: 10px;
+            }
+        }
+
+        /* ===================== Header Actions (Theme Toggle, Print, etc.) ===================== */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: 16px;
+        }
+
+        .header-actions button {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            border: none;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(4px);
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-actions button:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.08);
+        }
+
+        .header-actions button:active {
+            transform: scale(0.95);
+        }
+
+        /* ===================== Model Precision Selector ===================== */
+        .model-selector {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.10);
+            backdrop-filter: blur(8px);
+            padding: 4px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            position: relative;
+        }
+
+        .model-btn {
+            padding: 5px 14px;
+            border: none;
+            border-radius: 7px;
+            font-size: 12px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.65);
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            white-space: nowrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .model-btn:hover {
+            color: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .model-btn.active {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.18);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Tooltip popup */
+        .model-tooltip {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            width: 280px;
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 16px 18px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-6px);
+            transition: all 0.25s ease;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .model-tooltip.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .model-tooltip::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            right: 36px;
+            width: 12px;
+            height: 12px;
+            background: #1e293b;
+            transform: rotate(45deg);
+            border-left: 1px solid rgba(255, 255, 255, 0.08);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .model-tooltip .tt-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .model-tooltip .tt-desc {
+            font-size: 12.5px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .model-tooltip .tt-stats {
+            display: flex;
+            gap: 12px;
+            font-size: 11.5px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .model-tooltip .tt-stats span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .model-tooltip .tt-stats .tt-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .tt-dot.fast { background: #34d399; }
+        .tt-dot.medium { background: #fbbf24; }
+        .tt-dot.slow { background: #f87171; }
+
+        /* =============================================================
+           Dark mode — CSS custom properties
+           ============================================================= */
+        :root {
+            --bg-body: #f5f7fa;
+            --bg-card: #ffffff;
+            --bg-card-border: rgba(0,0,0,0.04);
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --bg-upload: linear-gradient(180deg, #fafbff 0%, #f5f6ff 100%);
+            --bg-upload-hover: linear-gradient(180deg, #f0f1ff 0%, #e8eafe 100%);
+            --bg-upload-dragover: linear-gradient(180deg, #eef0ff 0%, #e0e3ff 100%);
+            --bg-guideline: #f8f9fe;
+            --bg-guideline-border: #eef0f6;
+            --bg-guideline-hover: #f5f6ff;
+            --bg-preview: #f8f9fc;
+            --bg-preview-border: #e9ecf0;
+            --bg-image-info: #f1f4f9;
+            --bg-loading-overlay: rgba(255,255,255,0.82);
+            --border-color: #e2e5ea;
+            --border-light: #e2e8f0;
+            --zoom-btn-bg: #ffffff;
+            --zoom-btn-border: #e2e5ea;
+            --select-bg: #ffffff;
+            --slider-bg: #e2e5ea;
+            --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06);
+            --crop-mask: rgba(15,23,42,0.4);
+            --toast-bg: linear-gradient(135deg, #6366f1, #8b5cf6);
+            --theme-icon: '🌙';
+            --header-bg: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            --header-shadow: 0 4px 24px rgba(99, 102, 241, 0.3);
+            --color-btn-white-border: #d1d5db;
+            --size-btn-bg: #fff;
+            --size-btn-text: #475569;
+            --size-btn-border: #e2e5ea;
+            --export-btn-bg: linear-gradient(135deg, #10b981, #059669);
+            --process-btn-bg: linear-gradient(135deg, #6366f1, #8b5cf6);
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #080c14;
+            --bg-card: #111827;
+            --bg-card-border: rgba(255,255,255,0.05);
+            --text-primary: #eef2f8;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --bg-upload: linear-gradient(180deg, #1a2332 0%, #141c28 100%);
+            --bg-upload-hover: linear-gradient(180deg, #1f2c3d 0%, #1a2332 100%);
+            --bg-upload-dragover: linear-gradient(180deg, #243347 0%, #1a2332 100%);
+            --bg-guideline: #1a2332;
+            --bg-guideline-border: #283747;
+            --bg-guideline-hover: #202d3f;
+            --bg-preview: #080c14;
+            --bg-preview-border: #1a2332;
+            --bg-image-info: #1a2332;
+            --bg-loading-overlay: rgba(8,12,20,0.85);
+            --border-color: #1e2d42;
+            --border-light: #1a2332;
+            --zoom-btn-bg: #1a2332;
+            --zoom-btn-border: #2a3a4f;
+            --select-bg: #111827;
+            --slider-bg: #2a3a4f;
+            --shadow-card: 0 1px 2px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.5);
+            --crop-mask: rgba(0,0,0,0.55);
+            --toast-bg: linear-gradient(135deg, #6366f1, #8b5cf6);
+            --theme-icon: '☀️';
+            --header-bg: linear-gradient(135deg, #141e33 0%, #0e1528 50%, #0a1120 100%);
+            --header-shadow: 0 4px 24px rgba(0,0,0,0.5);
+            --color-btn-white-border: #2a3a4f;
+            --size-btn-bg: #1a2332;
+            --size-btn-text: #cbd5e1;
+            --size-btn-border: #2a3a4f;
+            --export-btn-bg: linear-gradient(135deg, #10b981, #059669);
+            --process-btn-bg: linear-gradient(135deg, #6366f1, #8b5cf6);
+
+            /* Override hardcoded light-mode colors */
+            .upload-area {
+                border-color: #2a3a4f;
+            }
+            .upload-area:hover {
+                border-color: #6366f1;
+            }
+            .upload-area.dragover {
+                border-color: #6366f1;
+                background: linear-gradient(180deg, #1c2a42 0%, #1a2332 100%);
+                box-shadow: 0 8px 32px rgba(99, 102, 241, 0.12);
+            }
+            .clear-btn {
+                color: #64748b;
+                border-color: #2a3a4f;
+            }
+            .clear-btn:hover {
+                color: #f87171;
+                border-color: #f87171;
+                background: rgba(248,113,113,0.08);
+            }
+
+            .zoom-btn-reset {
+                background: #1a2332 !important;
+            }
+            .zoom-btn-reset:hover {
+                background: #243347 !important;
+            }
+
+            .zoom-controls button:hover {
+                background: #1a2332;
+                border-color: #2a3a4f;
+            }
+
+            .size-btn {
+                background: var(--size-btn-bg);
+                color: var(--size-btn-text);
+                border-color: var(--size-btn-border);
+            }
+            .size-btn:hover {
+                border-color: #6366f1;
+                color: #a5b4fc;
+                background: #1c2638;
+            }
+
+            .spec-btn.active {
+                background: var(--process-btn-bg) !important;
+                color: #fff !important;
+                border-color: transparent !important;
+            }
+
+            .progress-bar {
+                background: #2a3a4f;
+            }
+
+            .export-field label {
+                color: #94a3b8;
+            }
+            .export-field select {
+                background: #1a2332;
+                color: #eef2f8;
+                border-color: #2a3a4f;
+            }
+            .export-field select:hover {
+                border-color: #6366f1;
+            }
+            .export-field select:focus {
+                border-color: #6366f1;
+                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            }
+        }
+
+        body {
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        .card {
+            transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* Print dialog */
+        .print-dialog-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        .print-dialog {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 28px 32px;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: var(--shadow-card);
+            border: 1px solid var(--border-color);
+        }
+        .print-dialog h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .print-layout-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 16px 0 20px;
+        }
+        .print-layout-btn {
+            padding: 14px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-card);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+        .print-layout-btn:hover {
+            border-color: #818cf8;
+            background: rgba(129, 140, 248, 0.08);
+        }
+        .print-layout-btn.active {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.1);
+        }
+        .layout-icon {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .layout-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .print-dialog-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .print-cancel-btn, .print-start-btn {
+            padding: 8px 22px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+        }
+        .print-cancel-btn {
+            background: var(--bg-card);
+            color: var(--text-secondary);
+        }
+        .print-cancel-btn:hover {
+            background: var(--bg-guideline);
+        }
+        .print-start-btn {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #fff;
+            border: none;
+        }
+        .print-start-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* Header actions */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .theme-toggle, .print-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover, .print-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-1px);
+        }
+        .theme-toggle:active, .print-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* ===================== Spec Encyclopedia ===================== */
+        .spec-encyclopedia-btn {
+            font-size: 12px;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color, #e2e5ea);
+            background: var(--bg-card, #fff);
+            color: var(--text-secondary, #64748b);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            line-height: 1.5;
+        }
+        .spec-encyclopedia-btn:hover {
+            border-color: #818cf8;
+            color: #6366f1;
+            background: rgba(99, 102, 241, 0.06);
+        }
+
+        .encyclopedia-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            backdrop-filter: blur(6px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.2s ease;
+        }
+        .encyclopedia-overlay.active {
+            display: flex;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .encyclopedia-modal {
+            background: var(--bg-card);
+            border-radius: 16px;
+            max-width: 720px;
+            width: 100%;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
+            animation: slideUp 0.25s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(24px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .encyclopedia-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px 16px;
+            border-bottom: 1px solid var(--border-color, #e5e7eb);
+            flex-shrink: 0;
+        }
+        .encyclopedia-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .encyclopedia-header h2 .sub {
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--text-muted, #94a3b8);
+            margin-left: 4px;
+        }
+        .encyclopedia-close {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            border: none;
+            background: var(--bg-guideline, #f1f4f9);
+            color: var(--text-secondary);
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .encyclopedia-close:hover {
+            background: #fee2e2;
+            color: #ef4444;
+        }
+
+        .encyclopedia-tabs {
+            display: flex;
+            gap: 6px;
+            padding: 12px 24px 0;
+            flex-shrink: 0;
+            overflow-x: auto;
+        }
+        .encyclopedia-tab {
+            padding: 6px 16px;
+            border-radius: 8px 8px 0 0;
+            border: none;
+            background: transparent;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted, #94a3b8);
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .encyclopedia-tab:hover {
+            color: var(--text-primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+        .encyclopedia-tab.active {
+            color: #6366f1;
+            background: rgba(99, 102, 241, 0.08);
+        }
+
+        .encyclopedia-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 24px 24px;
+        }
+        .encyclopedia-body::-webkit-scrollbar {
+            width: 6px;
+        }
+        .encyclopedia-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .encyclopedia-body::-webkit-scrollbar-thumb {
+            background: var(--border-color, #d1d5db);
+            border-radius: 3px;
+        }
+
+        .encyclopedia-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .encyclopedia-table thead th {
+            text-align: left;
+            padding: 10px 12px;
+            font-weight: 600;
+            color: var(--text-muted, #64748b);
+            font-size: 12px;
+            border-bottom: 2px solid var(--border-color, #e5e7eb);
+            position: sticky;
+            top: 0;
+            background: var(--bg-card);
+        }
+        .encyclopedia-table tbody tr {
+            cursor: pointer;
+            transition: background 0.15s;
+            border-bottom: 1px solid var(--border-color, #f1f4f9);
+        }
+        .encyclopedia-table tbody tr:hover {
+            background: rgba(99, 102, 241, 0.06);
+        }
+        .encyclopedia-table tbody tr:active {
+            background: rgba(99, 102, 241, 0.12);
+        }
+        .encyclopedia-table tbody tr.selected {
+            background: rgba(99, 102, 241, 0.08);
+            border-left: 3px solid #6366f1;
+        }
+        .encyclopedia-table td {
+            padding: 10px 12px;
+            color: var(--text-primary);
+            vertical-align: middle;
+        }
+        .encyclopedia-table td .bg-dot {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 1.5px solid var(--border-color, #d1d5db);
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+        .encyclopedia-table td .badge {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .badge-china { background: #fef3c7; color: #92400e; }
+        .badge-usa { background: #dbeafe; color: #1e40af; }
+        .badge-uk { background: #e0e7ff; color: #3730a3; }
+        .badge-japan { background: #fce7f3; color: #9d174d; }
+        .badge-eu { background: #d1fae5; color: #065f46; }
+        .badge-other { background: #f3f4f6; color: #374151; }
+
+        .encyclopedia-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted, #94a3b8);
+            font-size: 14px;
+        }
+
+        /* Dark mode overrides for encyclopedia */
+        [data-theme="dark"] .badge-china { background: #78350f; color: #fde68a; }
+        [data-theme="dark"] .badge-usa { background: #1e3a5f; color: #93c5fd; }
+        [data-theme="dark"] .badge-uk { background: #312e81; color: #c7d2fe; }
+        [data-theme="dark"] .badge-japan { background: #831843; color: #f9a8d4; }
+        [data-theme="dark"] .badge-eu { background: #064e3b; color: #6ee7b7; }
+        [data-theme="dark"] .badge-other { background: #374151; color: #d1d5db; }
+
+    </style>
+
+    <!-- Importmap for ESM dependencies (no bundler) -->
+    <script type="importmap">
+    {
+        "imports": {
+            "@imgly/background-removal": "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/dist/index.mjs",
+            "onnxruntime-web": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.21.0/dist/ort.bundle.min.mjs",
+            "onnxruntime-web/webgpu": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.21.0/dist/ort.webgpu.min.mjs"
+        }
+    }
+    </script>
+</head>
+<body>
+
+    <!-- Header (full-width banner, outside container) -->
+    <header class="app-header">
+        <div class="brand">
+            <div class="brand-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="8" r="4" fill="rgba(255,255,255,0.9)"/>
+                    <path d="M5 21c0-3.866 3.134-7 7-7s7 3.134 7 7" fill="rgba(255,255,255,0.9)"/>
+                </svg>
+            </div>
+            <div class="brand-text">
+                <h1>AI 证件照制作工具</h1>
+                <p>纯前端处理 · 照片不上传服务器 · 隐私安全</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="theme-toggle" id="themeToggle" title="切换深色模式">🌙</button>
+            <button class="print-btn" id="printBtn" title="多联排版打印">🖨️</button>
+        </div>
+        <div class="model-selector" id="modelSelector">
+            <button class="model-btn active" data-model="small">低精度</button>
+            <button class="model-btn" data-model="medium">中精度</button>
+            <button class="model-btn" data-model="large">高精度</button>
+            <div class="model-tooltip" id="modelTooltip">
+                <div class="tt-title" id="ttTitle">低精度模式</div>
+                <div class="tt-desc" id="ttDesc">采用 INT8 量化模型（~5MB），处理速度最快，适合预览和普通背景的照片。</div>
+                <div class="tt-stats">
+                    <span><span class="tt-dot fast"></span> 速度：快</span>
+                    <span><span class="tt-dot medium"></span> 模型：~5MB</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <!-- Top Row: Upload + Original Preview side by side -->
+        <div class="upload-row">
+            <!-- Left: Upload -->
+            <div class="card upload-card">
+                <div class="card-title">
+                    <span><span class="icon">🤳</span> 上传自拍照</span>
+                    <button class="clear-btn" id="clearBtn">✕ 清空</button>
+                </div>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">
+                        <span class="upload-icon-inner">📁</span>
+                    </div>
+                    <div class="upload-text">点击上传或拖拽照片到这里</div>
+                    <div class="upload-hint">支持 JPG / PNG / WebP 格式</div>
+                    <input type="file" id="fileInput" accept="image/*">
+                </div>
+
+                <div class="guidelines">
+                    <div class="guideline-item">
+                        <div class="guide-title"><span class="guide-icon">🧑</span> 面部清晰</div>
+                        <div class="guide-desc">确保光线充足，五官清晰可见，无模糊</div>
+                    </div>
+                    <div class="guideline-item">
+                        <div class="guide-title"><span class="guide-icon">💍</span> 不可佩戴首饰</div>
+                        <div class="guide-desc">取下眼镜、耳环、项链、发饰等遮挡物</div>
+                    </div>
+                    <div class="guideline-item">
+                        <div class="guide-title"><span class="guide-icon">💇</span> 不可遮挡额头</div>
+                        <div class="guide-desc">将头发拨开，露出额头和耳朵</div>
+                    </div>
+                    <div class="guideline-item">
+                        <div class="guide-title"><span class="guide-icon">🧍</span> 上半身端正</div>
+                        <div class="guide-desc">正面面对镜头，双肩保持水平</div>
+                    </div>
+                    <div class="guideline-item">
+                        <div class="guide-title"><span class="guide-icon">📏</span> 人像占比 ≥ 50%</div>
+                        <div class="guide-desc">人像主体应占画面一半以上</div>
+                    </div>
+                    <div class="guideline-item">
+                        <div class="guide-title"><span class="guide-icon">🎨</span> 纯色背景优先</div>
+                        <div class="guide-desc">浅色或纯色背景抠图效果更好</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Original Preview -->
+            <div class="card original-card">
+                <div class="card-title">
+                    <span><span class="icon">🔍</span> 原图预览</span>
+                </div>
+                <div class="original-preview-content">
+                    <div class="preview-box original-preview-box" id="originalPreview">
+                        <div class="placeholder">
+                            <div class="icon">🖼️</div>
+                            <div>等待上传...</div>
+                        </div>
+                    </div>
+                    <div class="image-info" id="imageInfo"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Grid: Result Preview + Controls -->
+        <div class="main-grid">
+            <!-- Left: Result Preview -->
+            <div class="card">
+                <div class="card-title">
+                    <span><span class="icon">👁️</span> 预览</span>
+                </div>
+                <div class="preview-label">✨ 处理结果</div>
+                <div class="preview-box main-preview" id="resultPreview">
+                    <div class="placeholder">
+                        <div class="icon">🎨</div>
+                        <div>等待处理...</div>
+                    </div>
+                    <!-- Crop overlay (shown after processing) -->
+                    <div class="crop-overlay" id="cropOverlay" style="display:none;">
+                        <div class="mask"></div>
+                        <div class="window" id="cropWindow">
+                            <div class="grid">
+                                <div class="g-v1"></div>
+                                <div class="g-v2"></div>
+                            </div>
+                            <div class="corner-br"></div>
+                            <div class="corner-bl"></div>
+                        </div>
+                    </div>
+                    <div class="crop-instructions" id="cropInstructions">🖱️ 拖拽移动 · 滚轮缩放</div>
+                    <div class="loading-overlay" id="resultLoading">
+                        <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
+                        <div class="loading-text">正在抠图处理中...</div>
+                    </div>
+                </div>
+                <!-- Zoom controls (hidden by default) -->
+                <div class="zoom-controls" id="zoomControls" style="display:none;">
+                    <button id="zoomOut" title="缩小">−</button>
+                    <input type="range" class="zoom-slider" id="zoomSlider" min="0.1" max="3" step="0.01" value="1">
+                    <button id="zoomIn" title="放大">+</button>
+                    <span class="zoom-label" id="zoomLabel">100%</span>
+                    <button class="zoom-btn-reset" id="zoomReset">↺ 重置</button>
+                    <button class="zoom-btn-reset" id="autoCenterBtn" title="自动居中人像" style="margin-left:4px;">🎯 居中</button>
+                </div>
+            </div>
+
+            <!-- Right: Controls -->
+            <div class="card">
+                <div class="card-title">
+                    <span><span class="icon">⚙️</span> 编辑设置</span>
+                </div>
+
+                <!-- Background Color -->
+                <div class="control-group">
+                    <label class="control-label">🎨 背景颜色</label>
+                    <div class="color-options">
+                        <button class="color-btn color-btn-white active" data-color="#ffffff" title="白底">
+                            <span class="tooltip">白底</span>
+                        </button>
+                        <button class="color-btn color-btn-blue" data-color="#1a73e8" title="蓝底">
+                            <span class="tooltip">蓝底</span>
+                        </button>
+                        <button class="color-btn color-btn-red" data-color="#e8343a" title="红底">
+                            <span class="tooltip">红底</span>
+                        </button>
+                        <button class="color-btn color-btn-gray" data-color="#d2d6dc" title="浅灰底">
+                            <span class="tooltip">浅灰底</span>
+                        </button>
+                        <div class="custom-color-wrap">
+                            <input type="color" id="customColor" value="#ffffff">
+                            <div class="custom-color-btn" id="customColorBtn" title="更多颜色">
+                                <span class="selected-color" id="customColorDot"></span>
+                                <span class="plus-icon">+</span>
+                                <span class="tooltip">更多颜色</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Photo Size -->
+                <div class="control-group">
+                    <label class="control-label">📐 照片尺寸
+                        <button class="spec-encyclopedia-btn" id="specEncyclopediaBtn" title="查看各国证件照规格百科">📖 规格百科</button>
+                    </label>
+                    <div class="size-options">
+                        <button class="size-btn active" data-size="1cun" data-w="295" data-h="413">
+                            1寸 <span class="sub">25×35mm</span>
+                        </button>
+                        <button class="size-btn" data-size="small1cun" data-w="260" data-h="378">
+                            小1寸 <span class="sub">22×32mm</span>
+                        </button>
+                        <button class="size-btn" data-size="big1cun" data-w="390" data-h="567">
+                            大1寸 <span class="sub">33×48mm</span>
+                        </button>
+                        <button class="size-btn" data-size="shebao" data-w="354" data-h="437">
+                            社保卡 <span class="sub">30×37mm</span>
+                        </button>
+                        <button class="size-btn" data-size="2cun" data-w="413" data-h="579">
+                            2寸 <span class="sub">35×49mm</span>
+                        </button>
+                        <button class="size-btn" data-size="small2cun" data-w="413" data-h="531">
+                            小2寸 <span class="sub">35×45mm</span>
+                        </button>
+                        <button class="size-btn" data-size="big2cun" data-w="413" data-h="626">
+                            大2寸 <span class="sub">35×53mm</span>
+                        </button>
+                        <button class="size-btn" data-size="3cun" data-w="650" data-h="992">
+                            3寸 <span class="sub">55×84mm</span>
+                        </button>
+                        <button class="size-btn" data-size="5cun" data-w="1051" data-h="1500">
+                            5寸 <span class="sub">89×127mm</span>
+                        </button>
+                        <button class="size-btn" data-size="7cun" data-w="1500" data-h="2102">
+                            7寸 <span class="sub">127×178mm</span>
+                        </button>
+                        <button class="size-btn" data-size="original">
+                            原图尺寸 <span class="sub">不裁剪</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Process Button -->
+                <button class="process-btn" id="processBtn" disabled>
+                    <span class="btn-text">🚀 开始抠图处理</span>
+                    <div class="spinner"></div>
+                </button>
+                <div class="progress-wrap" id="progressWrap">
+                    <div class="progress-bar">
+                        <div class="fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">准备中...</div>
+                </div>
+
+                <!-- Export -->
+                <div class="control-group" style="margin-top:16px;padding-top:16px;border-top:1px solid #e5e7eb;">
+                    <label class="control-label">💾 导出设置</label>
+                    <div class="export-row">
+                        <div class="export-field">
+                            <label>图片格式</label>
+                            <select id="exportFormat">
+                                <option value="image/png">PNG（无损透明）</option>
+                                <option value="image/jpeg" selected>JPG（通用格式）</option>
+                                <option value="image/webp">WebP（高压缩）</option>
+                            </select>
+                        </div>
+                        <div class="export-field">
+                            <label>文件大小上限</label>
+                            <select id="exportSizeLimit">
+                                <option value="0">不限大小（最高质量）</option>
+                                <option value="500" selected>≤ 500 KB</option>
+                                <option value="400">≤ 400 KB</option>
+                                <option value="200">≤ 200 KB</option>
+                                <option value="100">≤ 100 KB</option>
+                                <option value="50">≤ 50 KB</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="export-btn" id="exportBtn" disabled>📥 下载证件照</button>
+                    <div class="file-size-display" id="fileSizeDisplay"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Spec Encyclopedia Modal -->
+    <div class="encyclopedia-overlay" id="encyclopediaOverlay">
+        <div class="encyclopedia-modal">
+            <div class="encyclopedia-header">
+                <h2>
+                    📖 证件照规格百科
+                    <span class="sub">点击任意行一键选用规格</span>
+                </h2>
+                <button class="encyclopedia-close" id="encyclopediaClose">✕</button>
+            </div>
+            <div class="encyclopedia-tabs" id="encyclopediaTabs">
+                <button class="encyclopedia-tab active" data-tab="all">🌏 全部</button>
+                <button class="encyclopedia-tab" data-tab="china">🇨🇳 中国</button>
+                <button class="encyclopedia-tab" data-tab="usa">🇺🇸 美国</button>
+                <button class="encyclopedia-tab" data-tab="uk">🇬🇧 英国</button>
+                <button class="encyclopedia-tab" data-tab="eu">🇪🇺 欧盟</button>
+                <button class="encyclopedia-tab" data-tab="japan">🇯🇵 日本</button>
+                <button class="encyclopedia-tab" data-tab="other">🌍 其他</button>
+            </div>
+            <div class="encyclopedia-body" id="encyclopediaBody"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // ================================================================
+        //  Imports
+        // ================================================================
+        import { removeBackground } from '@imgly/background-removal';
+        const state = {
+            originalImage: null, // Image object (original)
+            processedBlob: null, // Blob of the foreground (person cutout)
+            processedCanvas: null, // Canvas with final composed image (person + bg color + size)
+            processedFullCanvas: null, // Full-resolution composed canvas (used for crop extraction)
+            selectedColor: '#ffffff',
+            selectedSize: '1cun',
+            sizeWidth: 295,
+            sizeHeight: 413,
+            isProcessing: false,
+            selectedModel: 'small',
+            // Crop state
+            cropScale: 1,
+            cropTranslateX: 0,
+            cropTranslateY: 0,
+            cropContainerW: 0,
+            cropContainerH: 0,
+            isDragging: false,
+            dragStartX: 0,
+            dragStartY: 0,
+            dragOrigX: 0,
+            dragOrigY: 0,
+            cropImgElement: null, // zoomable img element for crop transform
+            cropImageW: 0, // natural width of the image shown in crop container
+            cropImageH: 0, // natural height of the image shown in crop container
+        };
+
+        // ================================================================
+        //  DOM refs
+        // ================================================================
+        const $ = (id) => document.getElementById(id);
+        const uploadArea = $('uploadArea');
+        const fileInput = $('fileInput');
+        const originalPreview = $('originalPreview');
+        const resultPreview = $('resultPreview');
+        const resultLoading = $('resultLoading');
+        const imageInfo = $('imageInfo');
+        const processBtn = $('processBtn');
+        const progressWrap = $('progressWrap');
+        const progressFill = $('progressFill');
+        const progressText = $('progressText');
+        const exportBtn = $('exportBtn');
+        const exportFormat = $('exportFormat');
+        const exportSizeLimit = $('exportSizeLimit');
+        const fileSizeDisplay = $('fileSizeDisplay');
+        const toast = $('toast');
+
+        // Clear button
+        const clearBtn = $('clearBtn');
+
+        // Crop / Zoom DOM refs
+        const cropOverlay = $('cropOverlay');
+        const cropWindow = $('cropWindow');
+        const cropInstructions = $('cropInstructions');
+        const zoomControls = $('zoomControls');
+        const zoomSlider = $('zoomSlider');
+        const zoomLabel = $('zoomLabel');
+        const zoomIn = $('zoomIn');
+        const zoomOut = $('zoomOut');
+        const zoomReset = $('zoomReset');
+
+        // ================================================================
+        //  Toast helper
+        // ================================================================
+        let toastTimer = null;
+
+        function showToast(message, type = 'info') {
+            toast.textContent = message;
+            toast.className = 'toast ' + type + ' show';
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+
+        // ================================================================
+        //  Upload handling
+        // ================================================================
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // ================================================================
+        //  Clear button — reset everything
+        // ================================================================
+        clearBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            state.originalBlob = null;
+            state.processedBlob = null;
+            state.processedCanvas = null;
+            state.selectedBg = null;
+            state.croppedBlob = null;
+            state.currentStep = 'upload';
+            if (state.abortController) state.abortController.abort();
+            // Clear previews
+            originalPreview.innerHTML = `
+                    <div class="placeholder">
+                        <div class="icon">🖼️</div>
+                        <div>等待上传...</div>
+                    </div>
+                `;
+            resultPreview.innerHTML = `
+                    <div class="placeholder">
+                        <div class="icon">🎨</div>
+                        <div>等待处理...</div>
+                    </div>
+                `;
+            resultPreview.appendChild(resultLoading);
+            resultLoading.classList.remove('active');
+            // Reset controls
+            processBtn.disabled = true;
+            processBtn.classList.remove('loading');
+            exportBtn.disabled = true;
+            progressWrap.classList.remove('active');
+            zoomControls.style.display = 'none';
+            cropOverlay.style.display = 'none';
+            fileSizeDisplay.textContent = '';
+            imageInfo.textContent = '';
+            showToast('已清空当前任务', 'success');
+        });
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) handleFile(files[0]);
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) handleFile(fileInput.files[0]);
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showToast('请上传图片文件', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    state.originalImage = img;
+                    state.processedBlob = null;
+                    state.processedCanvas = null;
+                    state.processedFullCanvas = null;
+                    // Show original image simply (no crop)
+                    showOriginalPreview(img);
+                    showImageInfo(img);
+                    processBtn.disabled = false;
+                    exportBtn.disabled = true;
+                    // Reset processed preview
+                    resultPreview.innerHTML = `
+                            <div class="placeholder">
+                                <div class="icon">🎨</div>
+                                <div>等待处理...</div>
+                            </div>
+                        `;
+                    resultPreview.appendChild(resultLoading);
+                    zoomControls.style.display = 'none';
+                    cropOverlay.style.display = 'none';
+                    fileSizeDisplay.textContent = '';
+                    showToast('✅ 照片上传成功，请点击「开始抠图处理」', 'success');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showOriginalPreview(img) {
+            originalPreview.innerHTML = '';
+            const container = document.createElement('div');
+            container.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;';
+            const el = img.cloneNode();
+            el.draggable = false;
+            el.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;';
+            container.appendChild(el);
+            originalPreview.appendChild(container);
+        }
+
+        // ================================================================
+        //  Crop / Zoom / Pan (applied on processed result)
+        // ================================================================
+
+        function setupCropOnResult(fullCanvas) {
+            state.processedFullCanvas = fullCanvas;
+
+            // Clean the result preview box (keep cropOverlay and instructions)
+            resultPreview.innerHTML = '';
+            resultPreview.appendChild(cropOverlay);
+            resultPreview.appendChild(cropInstructions);
+
+            // Create crop container
+            const container = document.createElement('div');
+            container.className = 'crop-container';
+            container.id = 'cropContainer';
+            resultPreview.appendChild(container);
+
+            // Wait for layout then initialize
+            requestAnimationFrame(() => {
+                const rect = container.getBoundingClientRect();
+                const cw = rect.width;
+                const ch = rect.height;
+                state.cropContainerW = cw;
+                state.cropContainerH = ch;
+
+                state.cropImageW = fullCanvas.width;
+                state.cropImageH = fullCanvas.height;
+
+                // Create img element from canvas
+                const imgEl = new Image();
+                imgEl.onload = () => {
+                    imgEl.draggable = false;
+                    imgEl.style.display = 'block';
+                    imgEl.style.position = 'absolute';
+                    imgEl.style.left = '0';
+                    imgEl.style.top = '0';
+                    container.appendChild(imgEl);
+                    state.cropImgElement = imgEl;
+
+                    // Initial scale: fit the image within the container (contain)
+                    const iw = state.cropImageW;
+                    const ih = state.cropImageH;
+                    const initScale = Math.min(cw / iw, ch / ih);
+                    const initTx = (cw - iw * initScale) / 2;
+                    const initTy = (ch - ih * initScale) / 2;
+                    state.cropScale = initScale;
+                    state.cropTranslateX = initTx;
+                    state.cropTranslateY = initTy;
+
+                    applyCropTransform();
+
+                    // Update crop overlay window
+                    updateCropWindow();
+
+                    // Show & wire zoom controls
+                    zoomControls.style.display = '';
+                    cropOverlay.style.display = '';
+                    cropInstructions.classList.add('visible');
+
+                    zoomSlider.value = state.cropScale;
+                    zoomSlider.min = Math.round(initScale * 0.2 * 100) / 100;
+                    zoomSlider.max = Math.round(initScale * 5 * 100) / 100;
+                    updateZoomLabel();
+
+                    // Hide instructions after 3s
+                    setTimeout(() => cropInstructions.classList.remove('visible'), 3000);
+                };
+                imgEl.src = fullCanvas.toDataURL('image/png');
+            });
+        }
+
+        function applyCropTransform() {
+            if (!state.cropImgElement) return;
+            const s = state.cropScale;
+            const tx = state.cropTranslateX;
+            const ty = state.cropTranslateY;
+            state.cropImgElement.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
+        }
+
+        function updateCropWindow() {
+            const ow = state.cropContainerW;
+            const oh = state.cropContainerH;
+            const aspect = state.sizeWidth / state.sizeHeight;
+
+            let ww, wh;
+            // Fit window to container maintaining aspect ratio
+            if (aspect > ow / oh) {
+                ww = ow * 0.85;
+                wh = ww / aspect;
+            } else {
+                wh = oh * 0.85;
+                ww = wh * aspect;
+            }
+
+            ww = Math.round(ww);
+            wh = Math.round(wh);
+
+            cropWindow.style.width = ww + 'px';
+            cropWindow.style.height = wh + 'px';
+        }
+
+        function updateZoomLabel() {
+            const pct = Math.round(state.cropScale / getBaseScale() * 100);
+            zoomLabel.textContent = pct + '%';
+            zoomSlider.value = state.cropScale;
+        }
+
+        function getBaseScale() {
+            if (!state.cropImageW || !state.cropImageH) return 1;
+            return Math.min(state.cropContainerW / state.cropImageW, state.cropContainerH / state.cropImageH);
+        }
+
+        function zoomIncrement(delta) {
+            const s = state.cropScale;
+            const factor = 1.1;
+            const newScale = delta > 0 ? s * factor : s / factor;
+            setZoom(newScale);
+        }
+
+        function setZoom(targetScale) {
+            const min = parseFloat(zoomSlider.min);
+            const max = parseFloat(zoomSlider.max);
+            targetScale = Math.max(min, Math.min(max, targetScale));
+
+            const cw = state.cropContainerW;
+            const ch = state.cropContainerH;
+            const iw = state.cropImageW;
+            const ih = state.cropImageH;
+
+            // Center of container in image coordinates BEFORE zoom
+            const cx = (cw / 2 - state.cropTranslateX) / state.cropScale;
+            const cy = (ch / 2 - state.cropTranslateY) / state.cropScale;
+
+            state.cropScale = targetScale;
+
+            // After zoom, translate so the same image point stays at center
+            state.cropTranslateX = cw / 2 - cx * targetScale;
+            state.cropTranslateY = ch / 2 - cy * targetScale;
+
+            applyCropTransform();
+            updateZoomLabel();
+        }
+
+        // ================================================================
+        //  Crop image extraction
+        // ================================================================
+
+        function getCroppedCanvas() {
+            const srcCanvas = state.processedFullCanvas;
+            if (!srcCanvas) return null;
+
+            const cw = state.cropContainerW;
+            const ch = state.cropContainerH;
+
+            // Crop window position (centered)
+            const ww = parseFloat(cropWindow.style.width);
+            const wh = parseFloat(cropWindow.style.height);
+            const winLeft = (cw - ww) / 2;
+            const winTop = (ch - wh) / 2;
+
+            const s = state.cropScale;
+            const tx = state.cropTranslateX;
+            const ty = state.cropTranslateY;
+
+            // Map crop window from container coordinates to image source coordinates
+            const srcX = (winLeft - tx) / s;
+            const srcY = (winTop - ty) / s;
+            const srcW = ww / s;
+            const srcH = wh / s;
+
+            // Clamp to canvas bounds
+            const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+            const sx = clamp(srcX, 0, srcCanvas.width);
+            const sy = clamp(srcY, 0, srcCanvas.height);
+            const sw = clamp(srcW, 0, srcCanvas.width - sx);
+            const sh = clamp(srcH, 0, srcCanvas.height - sy);
+            if (sw <= 0 || sh <= 0) return null;
+
+            // Output dimensions: if "original" size, use source pixel dimensions
+            const outW = state.selectedSize === 'original'
+                ? Math.round(sw)
+                : state.sizeWidth;
+            const outH = state.selectedSize === 'original'
+                ? Math.round(sh)
+                : state.sizeHeight;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = outW;
+            canvas.height = outH;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(srcCanvas, sx, sy, sw, sh, 0, 0, outW, outH);
+            return canvas;
+        }
+
+        // ================================================================
+        //  Drag-to-pan
+        // ================================================================
+
+        function onCropMouseDown(e) {
+            if (e.button !== 0) return;
+            state.isDragging = true;
+            state.dragStartX = e.clientX;
+            state.dragStartY = e.clientY;
+            state.dragOrigX = state.cropTranslateX;
+            state.dragOrigY = state.cropTranslateY;
+            e.preventDefault();
+        }
+
+        function onCropMouseMove(e) {
+            if (!state.isDragging) return;
+            const dx = e.clientX - state.dragStartX;
+            const dy = e.clientY - state.dragStartY;
+            state.cropTranslateX = state.dragOrigX + dx;
+            state.cropTranslateY = state.dragOrigY + dy;
+            applyCropTransform();
+        }
+
+        function onCropMouseUp() {
+            state.isDragging = false;
+        }
+
+        // ================================================================
+        //  Wire up crop events (delegated, since container is recreated)
+        // ================================================================
+
+        function bindCropEvents(containerEl) {
+            containerEl.addEventListener('mousedown', (e) => {
+                const container = e.target.closest('.crop-container');
+                if (!container) return;
+                onCropMouseDown(e);
+            });
+
+            containerEl.addEventListener('wheel', (e) => {
+                if (state.cropImgElement) {
+                    e.preventDefault();
+                    const delta = e.deltaY < 0 ? 1 : -1;
+                    zoomIncrement(delta);
+                }
+            }, { passive: false });
+        }
+
+        // Bind events on the result preview
+        bindCropEvents(resultPreview);
+
+        document.addEventListener('mousemove', onCropMouseMove);
+        document.addEventListener('mouseup', onCropMouseUp);
+
+        // ================================================================
+        //  Zoom controls
+        // ================================================================
+
+        zoomIn.addEventListener('click', () => zoomIncrement(1));
+        zoomOut.addEventListener('click', () => zoomIncrement(-1));
+
+        zoomSlider.addEventListener('input', () => {
+            const val = parseFloat(zoomSlider.value);
+            setZoom(val);
+        });
+
+        zoomReset.addEventListener('click', () => {
+            if (!state.cropImageW || !state.cropImageH) return;
+            const iw = state.cropImageW;
+            const ih = state.cropImageH;
+            const cw = state.cropContainerW;
+            const ch = state.cropContainerH;
+            const initScale = Math.min(cw / iw, ch / ih);
+            state.cropScale = initScale;
+            state.cropTranslateX = (cw - iw * initScale) / 2;
+            state.cropTranslateY = (ch - ih * initScale) / 2;
+            applyCropTransform();
+            zoomSlider.value = initScale;
+            updateZoomLabel();
+        });
+
+        // ================================================================
+        //  Image info
+        // ================================================================
+
+        function showImageInfo(img) {
+            imageInfo.innerHTML = `
+                    <span>📐 ${img.naturalWidth} × ${img.naturalHeight} px</span>
+                    <span>📦 ${(state.originalImage.src.length * 0.75 / 1024).toFixed(1)} KB (估计)</span>
+                    <span>📷 ${img.naturalWidth > img.naturalHeight ? '横向' : '纵向'}拍摄</span>
+                `;
+        }
+
+        // ================================================================
+        //  Color selection
+        // ================================================================
+        document.querySelectorAll('.color-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                $('customColorBtn').classList.remove('active');
+                state.selectedColor = btn.dataset.color;
+                if (state.processedBlob) renderFinal();
+            });
+        });
+
+        // Custom color picker — button triggers hidden input
+        $('customColorBtn').addEventListener('click', () => {
+            $('customColor').click();
+        });
+
+        $('customColor').addEventListener('input', (e) => {
+            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+            $('customColorBtn').classList.add('active');
+            $('customColorDot').style.background = e.target.value;
+            $('customColorDot').classList.add('show');
+            state.selectedColor = e.target.value;
+            if (state.processedBlob) renderFinal();
+        });
+
+        // ================================================================
+        //  Size selection
+        // ================================================================
+        document.querySelectorAll('.size-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                state.selectedSize = btn.dataset.size;
+                if (btn.dataset.size === 'original') {
+                    // Use processed canvas dimensions (or original if not yet processed)
+                    if (state.processedCanvas) {
+                        state.sizeWidth = state.processedCanvas.width;
+                        state.sizeHeight = state.processedCanvas.height;
+                    } else if (state.originalImage) {
+                        state.sizeWidth = state.originalImage.naturalWidth;
+                        state.sizeHeight = state.originalImage.naturalHeight;
+                    } else {
+                        state.sizeWidth = 0;
+                        state.sizeHeight = 0;
+                    }
+                } else {
+                    state.sizeWidth = parseInt(btn.dataset.w);
+                    state.sizeHeight = parseInt(btn.dataset.h);
+                }
+                // Update crop overlay window aspect ratio
+                updateCropWindow();
+                if (state.processedBlob) renderFinal();
+            });
+        });
+
+        // ================================================================
+        //  Process: background removal
+        // ================================================================
+        processBtn.addEventListener('click', startProcessing);
+
+        async function startProcessing() {
+            if (state.isProcessing) return;
+            if (!state.originalImage) {
+                showToast('请先上传照片', 'error');
+                return;
+            }
+
+            state.isProcessing = true;
+            processBtn.disabled = true;
+            processBtn.classList.add('loading');
+            progressWrap.classList.add('active');
+            resultLoading.classList.add('active');
+            setProgress(0, '正在加载 AI 模型...');
+
+            try {
+                setProgress(10, '模型加载中...');
+                // 加载模型可能需要时间，需要等待 removeBackground 返回
+
+                setProgress(20, '正在分析人像...');
+
+                // 使用全尺寸原图做抠图（保留最大化细节）
+                const img = state.originalImage;
+
+                // 限制发送尺寸以防内存溢出 (最大 2000px)
+                const MAX_DIM = 2000;
+                let sendW = img.naturalWidth;
+                let sendH = img.naturalHeight;
+                if (sendW > MAX_DIM || sendH > MAX_DIM) {
+                    const scale = Math.min(MAX_DIM / sendW, MAX_DIM / sendH);
+                    sendW = Math.round(sendW * scale);
+                    sendH = Math.round(sendH * scale);
+                }
+
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = sendW;
+                tempCanvas.height = sendH;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(img, 0, 0, sendW, sendH);
+
+                const imageBlob = await new Promise((resolve) => {
+                    tempCanvas.toBlob(resolve, 'image/png');
+                });
+
+                setProgress(30, '正在抠图处理（首次使用需下载AI模型，约5-30秒）...');
+
+                const resultBlob = await removeBackground(imageBlob, {
+                    model: state.selectedModel,
+                    progress: (key, current, total) => {
+                        // 进度回调: key=模型/wasm名称, current=已下载, total=总大小
+                        const pct = total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
+                        const mappedPct = 30 + Math.round(pct * 0.5);
+                        setProgress(mappedPct, `⏳ 正在加载模型... ${pct}%`);
+                    },
+                });
+
+                setProgress(85, '抠图完成，正在合成...');
+
+                state.processedBlob = resultBlob;
+
+                // Render the final composite
+                renderFinal();
+
+                setProgress(100, '✅ 处理完成！');
+                showToast('✅ 抠图处理完成，您可以调整背景色和尺寸了', 'success');
+
+                exportBtn.disabled = false;
+
+            } catch (err) {
+                console.error(err);
+                showToast('❌ 处理失败：' + err.message, 'error');
+                setProgress(0, '处理失败，请重试');
+            } finally {
+                state.isProcessing = false;
+                processBtn.disabled = false;
+                processBtn.classList.remove('loading');
+                resultLoading.classList.remove('active');
+            }
+        }
+
+        function setProgress(pct, text) {
+            progressFill.style.width = pct + '%';
+            progressText.textContent = text;
+        }
+
+        // ================================================================
+        //  Render final composite (foreground + bg color + size)
+        // ================================================================
+        function renderFinal() {
+            if (!state.processedBlob) return;
+
+            const img = new Image();
+            img.onload = () => {
+                const w = img.naturalWidth;
+                const h = img.naturalHeight;
+
+                // Step 1: Create foreground-only canvas (person, transparent background)
+                const fgCanvas = document.createElement('canvas');
+                fgCanvas.width = w;
+                fgCanvas.height = h;
+                const fgCtx = fgCanvas.getContext('2d');
+                fgCtx.drawImage(img, 0, 0);
+
+                // Step 2: Composite onto background color
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = state.selectedColor;
+                ctx.fillRect(0, 0, w, h);
+                ctx.drawImage(fgCanvas, 0, 0);
+
+                state.processedCanvas = canvas;
+
+                // Show in result preview with crop overlay
+                setupCropOnResult(canvas);
+            };
+            img.src = URL.createObjectURL(state.processedBlob);
+        }
+
+        // ================================================================
+        //  Export
+        // ================================================================
+        exportBtn.addEventListener('click', exportPhoto);
+
+        async function exportPhoto() {
+            if (!state.processedCanvas) {
+                showToast('请先完成抠图处理', 'error');
+                return;
+            }
+
+            // Get the cropped canvas (user's zoom/pan selection)
+            const exportCanvas = getCroppedCanvas();
+            if (!exportCanvas) {
+                showToast('裁剪区域无效，请调整后重试', 'error');
+                return;
+            }
+
+            const format = exportFormat.value;
+            const sizeLimitKB = parseInt(exportSizeLimit.value);
+            const mimeType = format;
+
+            // Determine file extension
+            const extMap = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
+            const ext = extMap[mimeType] || 'png';
+
+            // Start with high quality, reduce if needed
+            let quality = 0.95;
+            let finalBlob = null;
+
+            // For PNG, quality is ignored; for jpg/webp we can adjust
+            if (mimeType === 'image/png') {
+                // PNG: just export directly, size limit handled by trying different strategies
+                finalBlob = await canvasToBlob(exportCanvas, mimeType, 1.0);
+                if (sizeLimitKB > 0 && finalBlob.size > sizeLimitKB * 1024) {
+                    // PNG too large: try to reduce by scaling down or converting to JPEG suggestion
+                    showToast('PNG 文件超出大小限制，建议改用 JPG 格式', 'error');
+                    return;
+                }
+            } else {
+                // JPG / WebP: binary search quality to meet size limit
+                if (sizeLimitKB === 0) {
+                    finalBlob = await canvasToBlob(exportCanvas, mimeType, 0.95);
+                } else {
+                    finalBlob = await binarySearchQuality(exportCanvas, mimeType, sizeLimitKB * 1024);
+                }
+            }
+
+            if (!finalBlob) {
+                showToast('导出失败，请重试', 'error');
+                return;
+            }
+
+            // Show file size
+            const sizeKB = (finalBlob.size / 1024).toFixed(1);
+            fileSizeDisplay.textContent = `📦 文件大小：${sizeKB} KB`;
+
+            // Download
+            const url = URL.createObjectURL(finalBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `证件照_${state.selectedSize}_${Date.now()}.${ext}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast(`✅ 下载成功！文件大小: ${sizeKB} KB`, 'success');
+        }
+
+        function canvasToBlob(canvas, mimeType, quality) {
+            return new Promise((resolve) => {
+                canvas.toBlob((blob) => resolve(blob), mimeType, quality);
+            });
+        }
+
+        async function binarySearchQuality(canvas, mimeType, maxBytes, iterations = 8) {
+            let lo = 0.05,
+                hi = 1.0;
+            let bestBlob = null;
+
+            for (let i = 0; i < iterations; i++) {
+                const mid = (lo + hi) / 2;
+                const blob = await canvasToBlob(canvas, mimeType, mid);
+                if (blob.size <= maxBytes) {
+                    bestBlob = blob;
+                    lo = mid + 0.02;
+                } else {
+                    hi = mid - 0.02;
+                }
+                if (lo > hi) break;
+            }
+
+            // Fallback: if even lowest quality exceeds limit, just return lowest quality
+            if (!bestBlob) {
+                bestBlob = await canvasToBlob(canvas, mimeType, 0.05);
+            }
+
+            return bestBlob;
+        }
+
+        // ================================================================
+        //  Handle format change advice
+        // ================================================================
+        exportFormat.addEventListener('change', () => {
+            const fmt = exportFormat.value;
+            if (fmt === 'image/png') {
+                showToast('PNG 格式文件较大，若需控制大小建议选用 JPG 或 WebP', 'info');
+            }
+        });
+
+        // ================================================================
+        //  Model precision switching & tooltip
+        // ================================================================
+        const modelBtns = document.querySelectorAll('.model-btn');
+        const modelTooltip = document.getElementById('modelTooltip');
+        const ttTitle = document.getElementById('ttTitle');
+        const ttDesc = document.getElementById('ttDesc');
+
+        const modelInfo = {
+            small: {
+                label: '低精度模式',
+                desc: '采用 INT8 量化模型（~5MB），处理速度最快，适合预览和普通背景的照片。',
+                speed: '快',
+                modelSize: '~5MB',
+                speedClass: 'fast'
+            },
+            medium: {
+                label: '中精度模式',
+                desc: '采用 FP16 半精度模型（~20MB），抠图质量与速度均衡，推荐日常使用。',
+                speed: '适中',
+                modelSize: '~20MB',
+                speedClass: 'medium'
+            },
+            large: {
+                label: '高精度模式',
+                desc: '采用 FP32 全精度模型（~40MB），抠图效果最精确，适合复杂背景照片。',
+                speed: '较慢',
+                modelSize: '~40MB',
+                speedClass: 'slow'
+            }
+        };
+
+        let tooltipTimer = null;
+        let tooltipTimeout = null;
+
+        function showModelTooltip(model) {
+            const info = modelInfo[model];
+            if (!info) return;
+
+            ttTitle.textContent = info.label;
+            ttDesc.textContent = info.desc;
+            modelTooltip.querySelector('.tt-stats').innerHTML = `
+                <span><span class="tt-dot ${info.speedClass}"></span> 速度：${info.speed}</span>
+                <span><span class="tt-dot ${info.speedClass}"></span> 模型：${info.modelSize}</span>
+            `;
+
+            clearTimeout(tooltipTimeout);
+            modelTooltip.classList.add('visible');
+        }
+
+        function hideModelTooltip(delay = 800) {
+            clearTimeout(tooltipTimeout);
+            tooltipTimeout = setTimeout(() => {
+                modelTooltip.classList.remove('visible');
+            }, delay);
+        }
+
+        modelBtns.forEach(btn => {
+            // Click to switch model
+            btn.addEventListener('click', async () => {
+                const model = btn.dataset.model;
+                if (model === state.selectedModel) return;
+
+                // Update active state
+                modelBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // Update state
+                state.selectedModel = model;
+
+                // Show tooltip for selected model
+                showModelTooltip(model);
+
+                // Auto-reload if there's a processed image
+                if (state.originalImage && !state.isProcessing) {
+                    showToast(`🔄 已切换到${btn.textContent}模式，请重新抠图`, 'info');
+                } else if (!state.originalImage) {
+                    showToast(`✅ 已切换到${btn.textContent}模式`, 'success');
+                }
+            });
+
+            // Mouse hover: show tooltip
+            btn.addEventListener('mouseenter', () => {
+                const model = btn.dataset.model;
+                showModelTooltip(model);
+            });
+
+            btn.addEventListener('mouseleave', () => {
+                hideModelTooltip();
+            });
+        });
+
+        // Keep tooltip visible when hovering over it
+        modelTooltip.addEventListener('mouseenter', () => {
+            clearTimeout(tooltipTimeout);
+        });
+
+        modelTooltip.addEventListener('mouseleave', () => {
+            hideModelTooltip(200);
+        });
+
+        // ================================================================
+        //  Dark Mode Toggle
+        // ================================================================
+        const themeToggle = document.getElementById('themeToggle');
+        const savedTheme = localStorage.getItem('idphoto-theme');
+        if (savedTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            themeToggle.textContent = '☀️';
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            if (isDark) {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('idphoto-theme', 'light');
+                themeToggle.textContent = '🌙';
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('idphoto-theme', 'dark');
+                themeToggle.textContent = '☀️';
+            }
+        });
+
+        // ================================================================
+        //  Portrait Auto-Center
+        // ================================================================
+        function autoCenterPortrait() {
+            if (!state.processedCanvas) return false;
+
+            const canvas = state.processedCanvas;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            const imageData = ctx.getImageData(0, 0, w, h);
+            const data = imageData.data;
+
+            // Find bounding box of non-transparent pixels
+            let minX = w, minY = h, maxX = 0, maxY = 0;
+            let found = false;
+
+            // Sample every 4th pixel for speed (full scan on large images is slow)
+            const step = 4;
+            for (let y = 0; y < h; y += step) {
+                for (let x = 0; x < w; x += step) {
+                    const alpha = data[(y * w + x) * 4 + 3];
+                    if (alpha > 30) {
+                        found = true;
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                    }
+                }
+            }
+
+            if (!found) return false;
+
+            // Subject center, both horizontally and vertically
+            const subjectCenterX = (minX + maxX) / 2;
+            const subjectCenterY = (minY + maxY) / 2;
+
+            // Map to display coordinates (scale factor from image to crop display)
+            const imgW = state.cropImageW;
+            const imgH = state.cropImageH;
+            if (imgW === 0 || imgH === 0) return false;
+
+            const scaleX = imgW / w;
+            const scaleY = imgH / h;
+
+            const displayCenterX = subjectCenterX * scaleX * state.cropScale;
+            const displayCenterY = subjectCenterY * scaleY * state.cropScale;
+
+            // Target: center of the crop container
+            const cx = state.cropContainerW / 2;
+            const cy = state.cropContainerH / 2;
+
+            state.cropTranslateX = cx - displayCenterX;
+            state.cropTranslateY = cy - displayCenterY;
+
+            // Apply the transform to the crop preview
+            if (typeof applyCropTransform === 'function') {
+                applyCropTransform();
+            }
+
+            showToast('🎯 已自动居中人像', 'success');
+            return true;
+        }
+
+        // Hook auto-center into processing completion
+        // (Patched at the point where renderFinal is called)
+        const _origRenderFinal = typeof renderFinal !== 'undefined' ? renderFinal : null;
+
+        // Auto-center button
+        const autoCenterBtn = document.getElementById('autoCenterBtn');
+        autoCenterBtn.addEventListener('click', () => {
+            if (!state.processedCanvas) {
+                showToast('请先完成抠图处理', 'error');
+                return;
+            }
+            autoCenterPortrait();
+        });
+
+        // ================================================================
+        //  Multi-Layout Printing
+        // ================================================================
+        const printBtn = document.getElementById('printBtn');
+
+        printBtn.addEventListener('click', () => {
+            if (!state.processedCanvas && !state.processedFullCanvas) {
+                showToast('请先完成抠图处理', 'error');
+                return;
+            }
+
+            // Show layout selector dialog
+            showPrintDialog();
+        });
+
+        function showPrintDialog() {
+            // Remove existing dialog if any
+            const oldDlg = document.getElementById('printLayoutDialog');
+            if (oldDlg) oldDlg.remove();
+
+            const dialog = document.createElement('div');
+            dialog.id = 'printLayoutDialog';
+            dialog.className = 'print-dialog-overlay';
+            dialog.innerHTML = `
+                <div class="print-dialog">
+                    <h3>🖨️ 多联排版打印</h3>
+                    <p style="color:var(--text-secondary);margin:8px 0 18px;font-size:13px;">选择每页排版数量</p>
+                    <div class="print-layout-grid">
+                        <button class="print-layout-btn" data-cols="2" data-rows="3">
+                            <span class="layout-icon">2×3</span>
+                            <span class="layout-label">6张/页 (2列×3行)</span>
+                        </button>
+                        <button class="print-layout-btn" data-cols="3" data-rows="4">
+                            <span class="layout-icon">3×4</span>
+                            <span class="layout-label">12张/页 (3列×4行)</span>
+                        </button>
+                        <button class="print-layout-btn" data-cols="4" data-rows="5">
+                            <span class="layout-icon">4×5</span>
+                            <span class="layout-label">20张/页 (4列×5行)</span>
+                        </button>
+                        <button class="print-layout-btn" data-cols="2" data-rows="2">
+                            <span class="layout-icon">2×2</span>
+                            <span class="layout-label">4张/页 (2列×2行)</span>
+                        </button>
+                    </div>
+                    <div class="print-dialog-actions">
+                        <button class="print-cancel-btn" id="printCancelBtn">取消</button>
+                        <button class="print-start-btn" id="printStartBtn">打印</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(dialog);
+
+            let selectedCols = 2, selectedRows = 3;
+
+            // Layout selection
+            dialog.querySelectorAll('.print-layout-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    dialog.querySelectorAll('.print-layout-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    selectedCols = parseInt(btn.dataset.cols);
+                    selectedRows = parseInt(btn.dataset.rows);
+                });
+            });
+            // Default: select first
+            dialog.querySelector('.print-layout-btn').classList.add('active');
+
+            document.getElementById('printCancelBtn').addEventListener('click', () => {
+                dialog.remove();
+            });
+
+            document.getElementById('printStartBtn').addEventListener('click', () => {
+                dialog.remove();
+                startPrint(selectedCols, selectedRows);
+            });
+
+            // Close on overlay click
+            dialog.addEventListener('click', (e) => {
+                if (e.target === dialog) dialog.remove();
+            });
+        }
+
+        async function startPrint(cols, rows) {
+            // Get the export canvas
+            const srcCanvas = state.processedFullCanvas || state.processedCanvas;
+            if (!srcCanvas) return;
+
+            const exportCanvas = getCroppedCanvas();
+            if (!exportCanvas) return;
+
+            // Get print dimensions (mm) for the selected photo size
+            const printWidthMM = state.sizeWidth / 3.78; // approximate px to mm at 96dpi
+            const printHeightMM = state.sizeHeight / 3.78;
+
+            // Create a print page layout
+            // Standard A4: 210 × 297mm, margins 15mm
+            const marginMM = 15;
+            const pageWMM = 210;
+            const pageHMM = 297;
+            const usableW = pageWMM - marginMM * 2;
+            const usableH = pageHMM - marginMM * 2;
+
+            // Calculate spacing
+            const gapH = (usableW - cols * printWidthMM) / (cols + 1);
+            const gapV = (usableH - rows * printHeightMM) / (rows + 1);
+
+            if (gapH < 2 || gapV < 2) {
+                showToast('所选排版不适合该照片尺寸，请选择较少的张数', 'error');
+                return;
+            }
+
+            // Calculate resolution (300 DPI for print)
+            const dpi = 300;
+            const pxPerMM = dpi / 25.4;
+
+            const totalW = Math.round(pageWMM * pxPerMM);
+            const totalH = Math.round(pageHMM * pxPerMM);
+            const marginPx = Math.round(marginMM * pxPerMM);
+
+            const photoW = Math.round(printWidthMM * pxPerMM);
+            const photoH = Math.round(printHeightMM * pxPerMM);
+            const gapHPx = Math.round(gapH * pxPerMM);
+            const gapVPx = Math.round(gapV * pxPerMM);
+
+            // Create print canvas
+            const printCanvas = document.createElement('canvas');
+            printCanvas.width = totalW;
+            printCanvas.height = totalH;
+            const pCtx = printCanvas.getContext('2d');
+
+            // White background
+            pCtx.fillStyle = '#ffffff';
+            pCtx.fillRect(0, 0, totalW, totalH);
+
+            // Draw photos
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const x = marginPx + gapHPx + col * (photoW + gapHPx);
+                    const y = marginPx + gapVPx + row * (photoH + gapVPx);
+                    pCtx.drawImage(exportCanvas, x, y, photoW, photoH);
+                }
+            }
+
+            // Open print window
+            const printUrl = printCanvas.toDataURL('image/png');
+            const printWin = window.open('', '_blank', 'width=800,height=600');
+            if (!printWin) {
+                showToast('请允许弹出窗口以进行打印', 'error');
+                return;
+            }
+
+            printWin.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head><title>证件照排版打印</title>
+                <style>
+                    body { margin:0; display:flex; justify-content:center; align-items:center; min-height:100vh; background:#f0f0f0; }
+                    img { max-width:100%; max-height:100vh; box-shadow:0 2px 12px rgba(0,0,0,0.15); }
+                    @media print {
+                        body { background:#fff; }
+                        img { box-shadow:none; max-width:100%; max-height:100vh; }
+                    }
+                </style>
+                </head>
+                <body><img src="${printUrl}" onload="window.print()"></body>
+                </html>
+            `);
+            printWin.document.close();
+        }
+        console.log('📷 AI 证件照制作工具已加载');
+        console.log('💡 提示：抠图使用 @imgly/background-removal 纯前端库，数据不上传服务器');
+
+        // ================================================================
+        //  Spec Encyclopedia
+        // ================================================================
+
+        const specData = [
+            // === 中国 ===
+            { country: 'china', countryLabel: '中国', name: '1寸证件照', usage: '学生证、工作证、简历照片', mm: '25×35mm', px: '295×413', bg: '#ffffff', bgLabel: '白底', w: 295, h: 413 },
+            { country: 'china', countryLabel: '中国', name: '小1寸证件照', usage: '驾驶证、体检照', mm: '22×32mm', px: '260×378', bg: '#ffffff', bgLabel: '白底', w: 260, h: 378 },
+            { country: 'china', countryLabel: '中国', name: '大1寸证件照', usage: '计算机等级考试、英语四六级', mm: '33×48mm', px: '390×567', bg: '#ffffff', bgLabel: '白底', w: 390, h: 567 },
+            { country: 'china', countryLabel: '中国', name: '2寸证件照', usage: '毕业证、学位证、部分签证', mm: '35×49mm', px: '413×579', bg: '#ffffff', bgLabel: '白底', w: 413, h: 579 },
+            { country: 'china', countryLabel: '中国', name: '小2寸证件照', usage: '护照（中国）', mm: '35×45mm', px: '413×531', bg: '#ffffff', bgLabel: '白底', w: 413, h: 531 },
+            { country: 'china', countryLabel: '中国', name: '大2寸证件照', usage: '签证（部分国家）', mm: '35×53mm', px: '413×626', bg: '#ffffff', bgLabel: '白底', w: 413, h: 626 },
+            { country: 'china', countryLabel: '中国', name: '3寸证件照', usage: '教师资格证', mm: '55×84mm', px: '650×992', bg: '#ffffff', bgLabel: '白底', w: 650, h: 992 },
+            { country: 'china', countryLabel: '中国', name: '社保卡照片', usage: '社保卡、医保卡', mm: '30×37mm', px: '354×437', bg: '#ffffff', bgLabel: '白底', w: 354, h: 437 },
+            { country: 'china', countryLabel: '中国', name: '身份证照片', usage: '二代身份证', mm: '26×32mm', px: '358×441', bg: '#ffffff', bgLabel: '白底', w: 358, h: 441 },
+            { country: 'china', countryLabel: '中国', name: '驾驶证照片', usage: '中国驾驶证', mm: '22×32mm', px: '260×378', bg: '#ffffff', bgLabel: '白底', w: 260, h: 378 },
+            { country: 'china', countryLabel: '中国', name: '港澳通行证', usage: '往来港澳通行证', mm: '33×48mm', px: '390×567', bg: '#1a73e8', bgLabel: '蓝底', w: 390, h: 567 },
+            { country: 'china', countryLabel: '中国', name: '台湾通行证', usage: '大陆居民往来台湾通行证', mm: '33×48mm', px: '390×567', bg: '#ffffff', bgLabel: '白底', w: 390, h: 567 },
+            // === 美国 ===
+            { country: 'usa', countryLabel: '美国', name: '美国护照', usage: 'USA Passport', mm: '51×51mm', px: '600×600', bg: '#ffffff', bgLabel: '白底', w: 600, h: 600 },
+            { country: 'usa', countryLabel: '美国', name: '美国签证', usage: 'USA Visa (5×5cm)', mm: '50×50mm', px: '600×600', bg: '#ffffff', bgLabel: '白底', w: 600, h: 600 },
+            { country: 'usa', countryLabel: '美国', name: '美国绿卡', usage: 'Green Card', mm: '51×51mm', px: '600×600', bg: '#ffffff', bgLabel: '白底', w: 600, h: 600 },
+            // === 英国 ===
+            { country: 'uk', countryLabel: '英国', name: '英国护照', usage: 'UK Passport', mm: '35×45mm', px: '413×531', bg: '#ffffff', bgLabel: '白底', w: 413, h: 531 },
+            { country: 'uk', countryLabel: '英国', name: '英国签证', usage: 'UK Visa', mm: '35×45mm', px: '413×531', bg: '#ffffff', bgLabel: '白底', w: 413, h: 531 },
+            // === 欧盟 ===
+            { country: 'eu', countryLabel: '欧盟', name: '申根签证', usage: 'Schengen Visa', mm: '35×45mm', px: '413×531', bg: '#ffffff', bgLabel: '白底', w: 413, h: 531 },
+            { country: 'eu', countryLabel: '欧盟', name: '德国签证', usage: 'Germany Visa', mm: '35×45mm', px: '413×531', bg: '#ffffff', bgLabel: '白底', w: 413, h: 531 },
+            { country: 'eu', countryLabel: '欧盟', name: '法国护照', usage: 'France Passport', mm: '35×45mm', px: '413×531', bg: '#ffffff', bgLabel: '白底', w: 413, h: 531 },
+            { country: 'eu', countryLabel: '欧盟', name: '意大利护照', usage: 'Italy Passport', mm: '35×45mm', px: '413×531', bg: '#ffffff', bgLabel: '白底', w: 413, h: 531 },
+            { country: 'eu', countryLabel: '欧盟', name: '西班牙签证', usage: 'Spain Visa', mm: '35×45mm', px: '413×531', bg: '#ffffff', bgLabel: '白底', w: 413, h: 531 },
+            // === 日本 ===
+            { country: 'japan', countryLabel: '日本', name: '日本护照', usage: '日本国旅券', mm: '35×45mm', px: '413×531', bg: '#ffffff', bgLabel: '白底', w: 413, h: 531 },
+            { country: 'japan', countryLabel: '日本', name: '日本签证', usage: '日本査証', mm: '35×45mm', px: '413×531', bg: '#ffffff', bgLabel: '白底', w: 413, h: 531 },
+            { country: 'japan', countryLabel: '日本', name: '日本驾照', usage: '運転免許証', mm: '30×24mm', px: '354×283', bg: '#ffffff', bgLabel: '白底', w: 354, h: 283 },
+            // === 其他 ===
+            { country: 'other', countryLabel: '其他', name: '加拿大护照', usage: 'Canada Passport', mm: '50×70mm', px: '590×826', bg: '#ffffff', bgLabel: '白底', w: 590, h: 826 },
+            { country: 'other', countryLabel: '其他', name: '澳大利亚签证', usage: 'Australia Visa', mm: '35×45mm', px: '413×531', bg: '#ffffff', bgLabel: '白底', w: 413, h: 531 },
+            { country: 'other', countryLabel: '其他', name: '韩国护照', usage: '대한민국 여권', mm: '35×45mm', px: '413×531', bg: '#ffffff', bgLabel: '白底', w: 413, h: 531 },
+            { country: 'other', countryLabel: '其他', name: '新加坡护照', usage: 'Singapore Passport', mm: '35×45mm', px: '413×531', bg: '#ffffff', bgLabel: '白底', w: 413, h: 531 },
+            { country: 'other', countryLabel: '其他', name: '马来西亚护照', usage: 'Malaysia Passport', mm: '35×50mm', px: '413×590', bg: '#1a73e8', bgLabel: '蓝底', w: 413, h: 590 },
+            { country: 'other', countryLabel: '其他', name: '泰国签证', usage: 'Thailand Visa', mm: '35×45mm', px: '413×531', bg: '#ffffff', bgLabel: '白底', w: 413, h: 531 },
+            { country: 'other', countryLabel: '其他', name: '越南签证', usage: 'Vietnam Visa', mm: '40×60mm', px: '472×709', bg: '#ffffff', bgLabel: '白底', w: 472, h: 709 },
+            { country: 'other', countryLabel: '其他', name: '俄罗斯签证', usage: 'Russia Visa', mm: '35×45mm', px: '413×531', bg: '#ffffff', bgLabel: '白底', w: 413, h: 531 },
+            { country: 'other', countryLabel: '其他', name: '巴西签证', usage: 'Brazil Visa', mm: '40×50mm', px: '472×590', bg: '#ffffff', bgLabel: '白底', w: 472, h: 590 },
+            { country: 'other', countryLabel: '其他', name: '印度护照', usage: 'India Passport', mm: '35×45mm', px: '413×531', bg: '#ffffff', bgLabel: '白底', w: 413, h: 531 },
+        ];
+
+        const encyclopediaBtn = document.getElementById('specEncyclopediaBtn');
+        const encyclopediaOverlay = document.getElementById('encyclopediaOverlay');
+        const encyclopediaClose = document.getElementById('encyclopediaClose');
+        const encyclopediaBody = document.getElementById('encyclopediaBody');
+        const encyclopediaTabs = document.getElementById('encyclopediaTabs');
+
+        function renderEncyclopedia(filterTab = 'all') {
+            const filtered = filterTab === 'all'
+                ? specData
+                : specData.filter(s => s.country === filterTab);
+
+            if (filtered.length === 0) {
+                encyclopediaBody.innerHTML = '<div class="encyclopedia-empty">暂无该分类下的规格数据</div>';
+                return;
+            }
+
+            const bgColorMap = {
+                '#ffffff': '⬜',
+                '#1a73e8': '🟦',
+                '#e8343a': '🟥',
+                '#d2d6dc': '⬜'
+            };
+
+            let html = `<table class="encyclopedia-table">
+                <thead><tr>
+                    <th>用途 / 名称</th>
+                    <th>尺寸 (mm)</th>
+                    <th>像素 (px)</th>
+                    <th>背景</th>
+                    <th style="text-align:center;">操作</th>
+                </tr></thead><tbody>`;
+
+            filtered.forEach((spec, idx) => {
+                const tabClass = spec.country === 'china' ? 'badge-china'
+                    : spec.country === 'usa' ? 'badge-usa'
+                    : spec.country === 'uk' ? 'badge-uk'
+                    : spec.country === 'japan' ? 'badge-japan'
+                    : spec.country === 'eu' ? 'badge-eu'
+                    : 'badge-other';
+
+                html += `<tr data-index="${idx}" data-country="${spec.country}">
+                    <td>
+                        <span class="badge ${tabClass}">${spec.countryLabel}</span>
+                        <strong>${spec.name}</strong>
+                        <div style="font-size:11px;color:var(--text-muted,#94a3b8);margin-top:2px;">${spec.usage}</div>
+                    </td>
+                    <td>${spec.mm}</td>
+                    <td>${spec.px}</td>
+                    <td><span class="bg-dot" style="background:${spec.bg};"></span>${spec.bgLabel}</td>
+                    <td style="text-align:center;">
+                        <button class="encyclopedia-pick-btn" data-index="${idx}" style="padding:3px 10px;border-radius:6px;border:1px solid #6366f1;background:transparent;color:#6366f1;font-size:12px;cursor:pointer;transition:all 0.2s;">选用</button>
+                    </td>
+                </tr>`;
+            });
+
+            html += '</tbody></table>';
+            encyclopediaBody.innerHTML = html;
+
+            // Delegate click events
+            encyclopediaBody.querySelectorAll('.encyclopedia-pick-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const idx = parseInt(btn.dataset.index);
+                    const activeTab = encyclopediaTabs.querySelector('.encyclopedia-tab.active');
+                    const filterTab = activeTab ? activeTab.dataset.tab : 'all';
+                    const list = filterTab === 'all' ? specData : specData.filter(s => s.country === filterTab);
+                    if (idx >= 0 && idx < list.length) {
+                        applySpec(list[idx]);
+                    }
+                });
+            });
+        }
+
+        function applySpec(spec) {
+            // Find & click matching size button
+            let matched = false;
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                if (btn.dataset.size === 'original') return;
+                const bw = parseInt(btn.dataset.w);
+                const bh = parseInt(btn.dataset.h);
+                if (bw === spec.w && bh === spec.h) {
+                    btn.click();
+                    matched = true;
+                }
+            });
+
+            // If no exact size match, set custom size by clicking the nearest size then overriding
+            if (!matched) {
+                // Try to find by aspect ratio closeness or just set via state
+                const customSize = Array.from(document.querySelectorAll('.size-btn')).find(b => b.dataset.size === '1cun');
+                if (customSize) customSize.click();
+                // Override state directly
+                state.sizeWidth = spec.w;
+                state.sizeHeight = spec.h;
+                state.selectedSize = 'custom';
+                // Update crop window
+                updateCropWindow();
+            }
+
+            // Select background color
+            const colorMap = {
+                '#ffffff': '白色',
+                '#1a73e8': '蓝色',
+                '#e8343a': '红色',
+                '#d2d6dc': '灰色'
+            };
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                const color = btn.dataset.color;
+                if (color && color.toLowerCase() === spec.bg.toLowerCase()) {
+                    btn.click();
+                }
+            });
+
+            // Close modal
+            encyclopediaOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+
+            // Show toast
+            showToast(`已选用「${spec.name}」${spec.mm} · ${spec.bgLabel}`, 'success');
+        }
+
+        // Open
+        encyclopediaBtn.addEventListener('click', () => {
+            encyclopediaOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            // Re-render on open to ensure fresh state
+            const activeTab = encyclopediaTabs.querySelector('.encyclopedia-tab.active');
+            renderEncyclopedia(activeTab ? activeTab.dataset.tab : 'all');
+        });
+
+        // Close
+        function closeEncyclopedia() {
+            encyclopediaOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        encyclopediaClose.addEventListener('click', closeEncyclopedia);
+        encyclopediaOverlay.addEventListener('click', (e) => {
+            if (e.target === encyclopediaOverlay) closeEncyclopedia();
+        });
+
+        // Tab switching
+        encyclopediaTabs.addEventListener('click', (e) => {
+            const tab = e.target.closest('.encyclopedia-tab');
+            if (!tab) return;
+            encyclopediaTabs.querySelectorAll('.encyclopedia-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            renderEncyclopedia(tab.dataset.tab);
+        });
+
+        // Keyboard: Escape to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && encyclopediaOverlay.classList.contains('active')) {
+                closeEncyclopedia();
+            }
+        });
+
+        // Make state and key functions available for debugging
+        window.__state = state;
+    </script>
+
+    <!-- PWA Service Worker registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('[PWA] SW registered:', reg.scope))
+                    .catch(err => console.warn('[PWA] SW registration failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>
